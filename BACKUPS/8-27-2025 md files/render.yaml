@@ -1,0 +1,35 @@
+services:
+  # Backend API
+  - type: web
+    name: pod-backend
+    env: node
+    plan: starter
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pod-database
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+  # Shopify App (Static)
+  - type: web
+    name: pod-shopify-app
+    env: static
+    buildCommand: cd shopify-app && npm install && npm run build
+    staticPublishPath: shopify-app/dist
+    
+  # Admin Panel (Static)
+  - type: web
+    name: pod-admin-panel
+    env: static
+    buildCommand: cd admin-panel && npm install && npm run build
+    staticPublishPath: admin-panel/dist
+
+databases:
+  - name: pod-database
+    plan: free

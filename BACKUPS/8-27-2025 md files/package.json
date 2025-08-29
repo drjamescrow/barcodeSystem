@@ -1,0 +1,20 @@
+{
+  "name": "pod-system",
+  "version": "1.0.0",
+  "description": "Print on Demand System for Shopify",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd shopify-app && npm install && cd ../admin-panel && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:shopify": "cd shopify-app && npm run dev",
+    "dev:admin": "cd admin-panel && npm run dev",
+    "build:all": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd shopify-app && npm run build && cd ../admin-panel && npm run build"
+  },
+  "keywords": ["shopify", "print-on-demand", "ecommerce"],
+  "author": "Your Name",
+  "license": "MIT"
+}

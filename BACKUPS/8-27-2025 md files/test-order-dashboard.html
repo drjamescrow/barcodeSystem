@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order System Test Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+        .info-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .test-steps {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .test-steps h3 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        .test-steps ol {
+            margin-left: 20px;
+            color: #718096;
+        }
+        .test-steps li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Order System Test Dashboard</h1>
+            <p>Test and verify your print-on-demand order processing system</p>
+        </div>
+
+        <div class="grid">
+            <!-- System Status Card -->
+            <div class="card">
+                <h2>📊 System Status</h2>
+                <div class="form-group">
+                    <label>Backend URL</label>
+                    <input type="text" id="backendUrl" value="https://pod-backend-yjyb.onrender.com" />
+                </div>
+                <div class="form-group">
+                    <label>Admin Token</label>
+                    <input type="password" id="adminToken" placeholder="Enter your admin token" />
+                </div>
+                <button onclick="checkSystemStatus()">Check Status</button>
+                <div id="statusResult" class="result-box" style="display:none;"></div>
+            </div>
+
+            <!-- Webhook Status Card -->
+            <div class="card">
+                <h2>🔔 Webhook Status</h2>
+                <div class="form-group">
+                    <label>Shop Domain</label>
+                    <input type="text" id="shopDomain" placeholder="your-shop.myshopify.com" />
+                </div>
+                <button onclick="checkWebhooks()">List Webhooks</button>
+                <button onclick="registerWebhooks()" style="margin-left: 10px;">Register Webhooks</button>
+                <div id="webhookResult" class="result-box" style="display:none;"></div>
+            </div>
+
+            <!-- Test Order Card -->
+            <div class="card">
+                <h2>🧪 Test Order</h2>
+                <div class="form-group">
+                    <label>Shop Domain</label>
+                    <input type="text" id="testShopDomain" placeholder="your-shop.myshopify.com" />
+                </div>
+                <div class="form-group">
+                    <label>Variant ID</label>
+                    <input type="text" id="variantId" placeholder="e.g., 44892636799289" />
+                </div>
+                <div class="form-group">
+                    <label>Product ID</label>
+                    <input type="text" id="productId" placeholder="e.g., 8167359152441" />
+                </div>
+                <button onclick="sendTestOrder()">Send Test Order</button>
+                <div id="testOrderResult" class="result-box" style="display:none;"></div>
+            </div>
+
+            <!-- Order Queue Card -->
+            <div class="card">
+                <h2>📦 Order Queue</h2>
+                <button onclick="fetchOrders()">Fetch Orders</button>
+                <div id="ordersResult" class="result-box" style="display:none;"></div>
+            </div>
+
+            <!-- Fix Utilities Card -->
+            <div class="card">
+                <h2>🔧 Fix Utilities</h2>
+                <button onclick="fixVariantIds()">Fix Missing Variant IDs</button>
+                <button onclick="migrateDatabase()" style="margin-left: 10px;">Migrate Database</button>
+                <div id="utilResult" class="result-box" style="display:none;"></div>
+            </div>
+
+            <!-- Test Guide Card -->
+            <div class="card">
+                <h2>📋 Quick Test Guide</h2>
+                <div class="test-steps">
+                    <h3>Order Flow Test Steps:</h3>
+                    <ol>
+                        <li>Check System Status - Verify backend is running</li>
+                        <li>List Webhooks - Ensure orders/paid webhook exists</li>
+                        <li>Create product in decorator with variants</li>
+                        <li>Note the variant ID from Shopify</li>
+                        <li>Send Test Order with variant ID</li>
+                        <li>Check Order Queue for the new order</li>
+                        <li>Test status updates and downloads in admin panel</li>
+                    </ol>
+                </div>
+                <div class="test-steps" style="margin-top: 10px;">
+                    <h3>Common Issues:</h3>
+                    <ul style="margin-left: 20px; color: #718096;">
+                        <li>No orders appearing → Check webhook registration</li>
+                        <li>Variant not found → Run "Fix Missing Variant IDs"</li>
+                        <li>Database errors → Run "Migrate Database"</li>
+                        <li>Auth errors → Check admin token is correct</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to make API calls
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const adminToken = document.getElementById('adminToken').value;
+            
+            if (!adminToken) {
+                alert('Please enter your admin token first');
+                return null;
+            }
+
+            const options = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(`${backendUrl}${endpoint}`, options);
+                const data = await response.json();
+                return { ok: response.ok, status: response.status, data };
+            } catch (error) {
+                return { ok: false, error: error.message };
+            }
+        }
+
+        // Check system status
+        async function checkSystemStatus() {
+            const resultDiv = document.getElementById('statusResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Checking system status...';
+
+            const result = await apiCall('/api/admin/orders/debug/status');
+            
+            if (result && result.ok) {
+                const data = result.data;
+                let html = '<h3>System Status</h3><ul class="info-list">';
+                html += `<li>Products with Variants: <span class="status ${data.products_with_variants > 0 ? 'success' : 'warning'}">${data.products_with_variants}</span></li>`;
+                html += `<li>Products without Variants: <span class="status ${data.products_without_variants === 0 ? 'success' : 'warning'}">${data.products_without_variants}</span></li>`;
+                html += `<li>Orders in Queue: <span class="status info">${data.current_queue_count}</span></li>`;
+                html += `<li>Pending Orders: <span class="status ${data.orders_by_status?.pending > 0 ? 'warning' : 'info'}">${data.orders_by_status?.pending || 0}</span></li>`;
+                html += '</ul>';
+                
+                if (data.sample_products?.length > 0) {
+                    html += '<h4 style="margin-top: 15px;">Sample Products:</h4><pre>' + JSON.stringify(data.sample_products, null, 2) + '</pre>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.error || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Check webhooks
+        async function checkWebhooks() {
+            const shopDomain = document.getElementById('shopDomain').value;
+            if (!shopDomain) {
+                alert('Please enter shop domain');
+                return;
+            }
+
+            const resultDiv = document.getElementById('webhookResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Checking webhooks...';
+
+            const result = await apiCall(`/api/admin/webhooks/list?shop_domain=${shopDomain}`);
+            
+            if (result && result.ok) {
+                const webhooks = result.data.webhooks;
+                let html = '<h3>Registered Webhooks</h3>';
+                
+                if (webhooks.length > 0) {
+                    html += '<ul class="info-list">';
+                    webhooks.forEach(webhook => {
+                        const isOrderWebhook = webhook.topic === 'orders/paid';
+                        html += `<li>${webhook.topic} <span class="status ${isOrderWebhook ? 'success' : 'info'}">${isOrderWebhook ? '✓ Order Processing' : 'Active'}</span></li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p class="status warning">No webhooks registered!</p>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.error || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Register webhooks
+        async function registerWebhooks() {
+            const shopDomain = document.getElementById('shopDomain').value;
+            if (!shopDomain) {
+                alert('Please enter shop domain');
+                return;
+            }
+
+            const resultDiv = document.getElementById('webhookResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Registering webhooks...';
+
+            const result = await apiCall('/api/admin/webhooks/register', 'POST', {
+                shop_domain: shopDomain,
+                force_recreate: true
+            });
+            
+            if (result && result.ok) {
+                resultDiv.innerHTML = '<span class="status success">✓ Webhooks registered successfully!</span>';
+                setTimeout(() => checkWebhooks(), 1000);
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.error || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Send test order
+        async function sendTestOrder() {
+            const shopDomain = document.getElementById('testShopDomain').value;
+            const variantId = document.getElementById('variantId').value;
+            const productId = document.getElementById('productId').value;
+
+            if (!shopDomain || !variantId) {
+                alert('Please enter shop domain and variant ID');
+                return;
+            }
+
+            const resultDiv = document.getElementById('testOrderResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Sending test order...';
+
+            const result = await apiCall('/api/admin/orders/test-webhook', 'POST', {
+                shop_domain: shopDomain,
+                variant_id: variantId,
+                product_id: productId || ''
+            });
+            
+            if (result && result.ok) {
+                resultDiv.innerHTML = `<span class="status success">✓ Test order created!</span><pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.message || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Fetch orders
+        async function fetchOrders() {
+            const resultDiv = document.getElementById('ordersResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Fetching orders...';
+
+            const result = await apiCall('/api/admin/orders?limit=10');
+            
+            if (result && result.ok) {
+                const orders = result.data.orders;
+                let html = `<h3>Recent Orders (${result.data.total} total)</h3>`;
+                
+                if (orders.length > 0) {
+                    html += '<ul class="info-list">';
+                    orders.forEach(order => {
+                        const statusClass = order.status === 'pending' ? 'warning' : 
+                                          order.status === 'shipped' ? 'success' : 'info';
+                        html += `<li>Order #${order.order_id} <span class="status ${statusClass}">${order.status}</span></li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p class="status info">No orders in queue yet</p>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.error || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Fix variant IDs
+        async function fixVariantIds() {
+            const resultDiv = document.getElementById('utilResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Fixing variant IDs...';
+
+            const result = await apiCall('/api/admin/fix-variant-ids', 'POST');
+            
+            if (result && result.ok) {
+                resultDiv.innerHTML = `<span class="status success">✓ Fixed ${result.data.fixed} products!</span><pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.error || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Migrate database
+        async function migrateDatabase() {
+            if (!confirm('This will run database migrations. Continue?')) {
+                return;
+            }
+
+            const resultDiv = document.getElementById('utilResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"></div> Running database migration...';
+
+            const result = await apiCall('/api/admin/migrate-db', 'POST');
+            
+            if (result && result.ok) {
+                resultDiv.innerHTML = '<span class="status success">✓ Database migrated successfully!</span>';
+            } else {
+                resultDiv.innerHTML = `<span class="status error">Error: ${result?.data?.error || result?.error || 'Unknown error'}</span>`;
+            }
+        }
+
+        // Load saved values from localStorage
+        window.onload = function() {
+            const savedToken = localStorage.getItem('adminToken');
+            if (savedToken) {
+                document.getElementById('adminToken').value = savedToken;
+            }
+            
+            const savedShop = localStorage.getItem('testShopDomain');
+            if (savedShop) {
+                document.getElementById('shopDomain').value = savedShop;
+                document.getElementById('testShopDomain').value = savedShop;
+            }
+        };
+
+        // Save values to localStorage
+        document.getElementById('adminToken').addEventListener('change', function() {
+            localStorage.setItem('adminToken', this.value);
+        });
+
+        document.getElementById('shopDomain').addEventListener('change', function() {
+            localStorage.setItem('testShopDomain', this.value);
+            document.getElementById('testShopDomain').value = this.value;
+        });
+    </script>
+</body>
+</html>
