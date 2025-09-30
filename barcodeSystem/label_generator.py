@@ -28,7 +28,7 @@ class LabelGenerator:
 
         # Layout dimensions
         self.margin = 5  # 5 points margin
-        self.datamatrix_size = 0.45 * inch  # Reduced to 0.45" (~32 points) for better layout
+        self.datamatrix_size = 0.3825 * inch  # 15% smaller than original 0.45" for space optimization
         self.title_width = self.label_width * 0.7   # 70% for title, 30% for datamatrix
 
         # Font sizes
@@ -510,12 +510,12 @@ class LabelGenerator:
             line_y = title_start_y - (i * (self.title_font_size + 2))
             c.drawString(self.margin, line_y, line)
 
-        # Draw DataMatrix image (right side)
+        # Draw DataMatrix image (top right corner)
         datamatrix_pil_img = self.fetch_datamatrix_image(datamatrix_url)
         if datamatrix_pil_img:
-            # Position DataMatrix on right side, vertically centered
+            # Position DataMatrix in top right corner
             datamatrix_x = self.label_width - self.datamatrix_size - self.margin
-            datamatrix_y = (self.label_height - self.datamatrix_size) / 2
+            datamatrix_y = self.label_height - self.datamatrix_size - self.margin
 
             # Draw PIL image using ImageReader
             c.drawImage(
@@ -526,6 +526,15 @@ class LabelGenerator:
                 height=self.datamatrix_size,
                 preserveAspectRatio=True
             )
+
+            # Draw "FRONT" text below DataMatrix in 6pt font
+            c.setFont("Helvetica-Bold", 6)
+            front_text = "FRONT"
+            front_text_width = c.stringWidth(front_text, "Helvetica-Bold", 6)
+            # Center the text below the DataMatrix
+            front_text_x = datamatrix_x + (self.datamatrix_size - front_text_width) / 2
+            front_text_y = datamatrix_y - 6  # 6 points below the DataMatrix
+            c.drawString(front_text_x, front_text_y, front_text)
 
         # Finish the page
         c.showPage()
@@ -669,7 +678,7 @@ class LabelGenerator:
 
         return buffer, label_count
 
-    def create_enhanced_label_page(self, c, product, product_type, size, datamatrix_url, order_number, sku, store_name, ship_date):
+    def create_enhanced_label_page(self, c, product, product_type, size, datamatrix_url, order_number, sku, store_name, ship_date, bin_number, item_index, total_items):
         """Create a single enhanced label page with additional information"""
         # Set page size to exactly 2" x 1"
         c.setPageSize((self.label_width, self.label_height))
@@ -749,13 +758,12 @@ class LabelGenerator:
                     preserveAspectRatio=False  # Force to fill the entire space
                 )
 
-        # Draw DataMatrix image (right side, below product type line)
+        # Draw DataMatrix image (top right corner)
         datamatrix_pil_img = self.fetch_datamatrix_image(datamatrix_url)
         if datamatrix_pil_img:
-            # Position DataMatrix on right side, below the product type line
+            # Position DataMatrix in top right corner
             datamatrix_x = self.label_width - self.datamatrix_size - self.margin
-            # Position DataMatrix in the middle area of the label, well below product type
-            datamatrix_y = self.label_height / 2 - self.datamatrix_size / 2
+            datamatrix_y = self.label_height - self.datamatrix_size - self.margin
 
             # Draw PIL image using ImageReader
             c.drawImage(
@@ -766,6 +774,15 @@ class LabelGenerator:
                 height=self.datamatrix_size,
                 preserveAspectRatio=True
             )
+
+            # Draw "FRONT" text below DataMatrix in 6pt font
+            c.setFont("Helvetica-Bold", 6)
+            front_text = "FRONT"
+            front_text_width = c.stringWidth(front_text, "Helvetica-Bold", 6)
+            # Center the text below the DataMatrix
+            front_text_x = datamatrix_x + (self.datamatrix_size - front_text_width) / 2
+            front_text_y = datamatrix_y - 6  # 6 points below the DataMatrix
+            c.drawString(front_text_x, front_text_y, front_text)
 
         # Draw bottom text in 2 rows with order details
         c.setFont("Helvetica-Bold", self.bottom_text_font_size)
@@ -807,6 +824,27 @@ class LabelGenerator:
         if bottom_row_2_text:
             c.drawString(self.margin, bottom_row_2_y, bottom_row_2_text)
 
+        # Draw bottom-right corner text for multi-item order grouping
+        # "A of X" text (8pt bold, always shown)
+        c.setFont("Helvetica-Bold", 8)
+        item_text = f"{item_index} of {total_items}"
+        item_text_width = c.stringWidth(item_text, "Helvetica-Bold", 8)
+        item_text_x = self.label_width - item_text_width - self.margin
+        item_text_y = self.margin + 2  # Bottom line
+        c.drawString(item_text_x, item_text_y, item_text)
+
+        # "BIN Y" text (10pt bold, only if multi-item order)
+        if total_items > 1:
+            c.setFont("Helvetica-Bold", 10)
+            if bin_number == "THEPIT":
+                bin_text = "THEPIT"
+            else:
+                bin_text = f"BIN {bin_number}"
+            bin_text_width = c.stringWidth(bin_text, "Helvetica-Bold", 10)
+            bin_text_x = self.label_width - bin_text_width - self.margin
+            bin_text_y = self.margin + 14  # Line above (10pt font + spacing)
+            c.drawString(bin_text_x, bin_text_y, bin_text)
+
         # Finish the page
         c.showPage()
 
@@ -814,6 +852,29 @@ class LabelGenerator:
         """Generate PDF with enhanced labels for new format"""
         # Sort labels hierarchically by rule order, condition order, then size
         df_sorted = self.sort_hierarchically(df)
+
+        # Assign bin numbers and item positions for multi-item orders
+        # Group by OrderNumber and count items per order
+        order_counts = df_sorted.groupby('OrderNumber').size().to_dict()
+
+        # Identify multi-item orders (count > 1) and assign bin numbers
+        multi_item_orders = {order: count for order, count in order_counts.items() if count > 1}
+        bin_assignments = {}
+        bin_counter = 1
+
+        for order in df_sorted['OrderNumber'].unique():
+            if order in multi_item_orders:
+                # Assign bin number (1-12, then "THEPIT")
+                if bin_counter <= 12:
+                    bin_assignments[order] = bin_counter
+                else:
+                    bin_assignments[order] = "THEPIT"
+                bin_counter += 1
+            else:
+                bin_assignments[order] = None  # Single-item order
+
+        # Track item position within each order
+        order_item_counters = {order: 0 for order in df_sorted['OrderNumber'].unique()}
 
         # Create PDF buffer
         buffer = io.BytesIO()
@@ -833,11 +894,20 @@ class LabelGenerator:
             store_name = row.get('StoreName', '')
             ship_date = row.get('ShipDate', '')
 
+            # Get bin assignment and item counting info
+            bin_number = bin_assignments.get(order_number, None)
+            total_items = order_counts.get(order_number, 1)
+
+            # Increment item counter for this order
+            order_item_counters[order_number] += 1
+            item_index = order_item_counters[order_number]
+
             # Generate the specified quantity of identical labels
             for _ in range(quantity):
                 self.create_enhanced_label_page(
                     c, product, product_type, size, datamatrix_url,
-                    order_number, sku, store_name, ship_date
+                    order_number, sku, store_name, ship_date,
+                    bin_number, item_index, total_items
                 )
                 label_count += 1
 
