@@ -1,0 +1,205 @@
+{
+  "product_types": [
+    "Soft Premium Tee - Black",
+    "Soft Premium Tee - White",
+    "Luxury Heavy Tee - Black",
+    "Luxury Heavy Tee - Vintage Black",
+    "Luxury Heavy Tee - Stone Wash",
+    "Vintage Crew Sweatshirt - Pepper",
+    "Luxury Hoodie - Vintage Black",
+    "Unisex Fleece Sweat Shorts",
+    "Insulated Can Cooler",
+    "Trucker Hat"
+  ],
+  "shortening_rules": [
+    {
+      "conditions": [
+        {
+          "contains": "BLACK",
+          "result": "PC450 - BK"
+        },
+        {
+          "contains": "RED",
+          "result": "PC450 - RD"
+        },
+        {
+          "contains": "MILITARY GREEN",
+          "result": "PC450 - MGRN"
+        },
+        {
+          "default": true,
+          "result": "PC450"
+        }
+      ],
+      "pattern": "STAPLE TEE"
+    },
+    {
+      "conditions": [
+        {
+          "contains": "WHITE",
+          "result": "SOFT TEE - WT"
+        },
+        {
+          "contains": "BLACK",
+          "result": "SOFT TEE - BK"
+        },
+        {
+          "default": true,
+          "result": "SOFT TEE"
+        }
+      ],
+      "pattern": "SOFT PREMIUM TEE"
+    },
+    {
+      "conditions": [
+        {
+          "contains": "BLACK",
+          "result": "LUX TEE - BK"
+        },
+        {
+          "contains": "STONE",
+          "result": "LUX TEE -ST"
+        },
+        {
+          "default": true,
+          "result": "LUX TEE"
+        }
+      ],
+      "pattern": "LUXURY HEAVY TEE"
+    },
+    {
+      "conditions": [
+        {
+          "default": true,
+          "result": "CREW SWTSHRT - PPR"
+        }
+      ],
+      "pattern": "VINTAGE CREW SWEATSHIRT"
+    },
+    {
+      "conditions": [
+        {
+          "default": true,
+          "result": "LUX HOODIE - BK"
+        }
+      ],
+      "pattern": "LUXURY HOODIE"
+    },
+    {
+      "conditions": [
+        {
+          "default": true,
+          "result": "KOOZIE"
+        },
+        {
+          "contains": "CAMO",
+          "result": "KOOZIE - CAMO"
+        },
+        {
+          "contains": "2PACK",
+          "result": "KOOZIE 2PK"
+        },
+        {
+          "contains": "2 PACK",
+          "result": "KOOZIE 2PK"
+        },
+        {
+          "contains": "2-PACK",
+          "result": "KOOZIE 2PK"
+        }
+      ],
+      "pattern": "KOOZIE"
+    },
+    {
+      "conditions": [
+        {
+          "contains": "CAMO",
+          "result": "KOOZIE - CAMO"
+        },
+        {
+          "contains": "2PACK",
+          "result": "KOOZIE 2PK"
+        },
+        {
+          "contains": "2 PACK",
+          "result": "KOOZIE 2PK"
+        },
+        {
+          "contains": "2-PACK",
+          "result": "KOOZIE 2PK"
+        },
+        {
+          "default": true,
+          "result": "KOOZIE"
+        }
+      ],
+      "pattern": "INSULATED CAN COOLER"
+    },
+    {
+      "conditions": [
+        {
+          "contains": "FRONT: BLACK MESH: BLACK",
+          "result": "TRUCK - BKBK"
+        },
+        {
+          "contains": "FRONT: WHITE MESH: BLACK",
+          "result": "TRUCK - WTBK"
+        },
+        {
+          "contains": "FRONT:GREEN",
+          "result": "TRUCK - GNCAMO"
+        },
+        {
+          "contains": "CAPTAIN",
+          "result": "TRUCK - CAPTAIN GOLD"
+        },
+        {
+          "contains": "FRONT: ORANGE",
+          "result": "TRUCK - ORCAMO"
+        },
+        {
+          "contains": "FRONT: GREEN",
+          "result": "TRUCK - GNCAMO"
+        },
+        {
+          "contains": "FRONT: BLACK MESH: WHITE",
+          "result": "TRUCK - BKWT"
+        },
+        {
+          "contains": "BLACK/WHITE",
+          "result": "TRUCK - BKWT"
+        },
+        {
+          "contains": "BLACK/BLACK",
+          "result": "TRUCK - BKBK"
+        },
+        {
+          "contains": "WHITE/BLACK",
+          "result": "TRUCK - WTBK"
+        },
+        {
+          "contains": "RED",
+          "result": "TRUCK - RDRD"
+        },
+        {
+          "contains": "ORANGE CAMO",
+          "result": "TRUCK - ORCAMO"
+        },
+        {
+          "default": true,
+          "result": "TRUCK"
+        }
+      ],
+      "pattern": "TRUCKER HAT"
+    },
+    {
+      "conditions": [
+        {
+          "default": true,
+          "result": "SWEATSHORTS"
+        }
+      ],
+      "pattern": "UNISEX FLEECE SWEAT SHORTS"
+    }
+  ]
+}

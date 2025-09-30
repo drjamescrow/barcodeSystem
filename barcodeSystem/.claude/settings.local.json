@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"$file\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Read(//c/Users/richa/Downloads/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

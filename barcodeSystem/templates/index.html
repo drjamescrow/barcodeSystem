@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Generator - Thermal Printer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>🏷️ Label Generator</h1>
+                    <p id="headerSubtitle">Generate 3"×1" labels for thermal printers (203 DPI)</p>
+                </div>
+                <button id="settingsBtn" class="settings-btn" title="Settings">
+                    ⚙️
+                </button>
+            </div>
+        </header>
+
+        <div class="upload-section">
+            <!-- Label Size Toggle -->
+            <div class="label-size-toggle">
+                <h3>Select Label Size</h3>
+                <div class="toggle-control">
+                    <button type="button" class="toggle-btn" data-size="2x1">
+                        📏 2" × 1"
+                    </button>
+                    <button type="button" class="toggle-btn active" data-size="3x1">
+                        📏 3" × 1"
+                    </button>
+                </div>
+            </div>
+
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="hidden" id="labelSizeInput" name="label_size" value="3x1">
+                <div class="file-input-container">
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="upload-icon">📁</div>
+                            <h3>Drop your file here or click to browse</h3>
+                            <p>Supports .xlsx and .csv files (max 10MB)</p>
+                            <input type="file" id="fileInput" name="file" accept=".xlsx,.csv" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <div class="file-details">
+                        <span id="fileName"></span>
+                        <span id="fileSize"></span>
+                    </div>
+                    <button type="button" id="removeFile" class="remove-btn">×</button>
+                </div>
+
+                <button type="submit" id="generateBtn" class="generate-btn" disabled>
+                    Generate Labels
+                </button>
+            </form>
+
+            <div id="progressContainer" class="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div id="progressBar" class="progress-fill"></div>
+                </div>
+                <p id="progressText">Processing...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;">
+                <div class="success-message">
+                    <h3>✅ Labels Generated Successfully!</h3>
+                    <p id="labelCount"></p>
+                    <a id="downloadLink" class="download-btn" href="#" download>
+                        📥 Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                <div class="error-message">
+                    <h3>❌ Error</h3>
+                    <p id="errorText"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📋 File Format Requirements</h2>
+            <div class="format-info">
+                <p>This application supports two file formats:</p>
+
+                <h3>📋 Original Format</h3>
+                <p>Your Excel (.xlsx) or CSV file must contain these columns:</p>
+                <ul>
+                    <li><strong>Product</strong> - Product name/title</li>
+                    <li><strong>Size</strong> - Size code (S, M, L, XL, etc.)</li>
+                    <li><strong>Quantity</strong> - Number of labels to generate</li>
+                    <li><strong>Datamatrix URL</strong> - URL to the DataMatrix image</li>
+                </ul>
+
+                <h3>🆕 Enhanced Format</h3>
+                <p>For order management systems with additional details:</p>
+                <ul>
+                    <li><strong>Order - Number</strong> - Order reference number</li>
+                    <li><strong>Item - SKU</strong> - Product SKU code</li>
+                    <li><strong>Item - Name</strong> - HTML product description (auto-parsed)</li>
+                    <li><strong>Item - Qty</strong> - Quantity to generate</li>
+                    <li><strong>Item - Image URL</strong> - URL to DataMatrix image</li>
+                    <li><strong>Market - Store Name</strong> - Store/marketplace name</li>
+                    <li><strong>Date - Ship By Date</strong> - Shipping deadline</li>
+                </ul>
+
+                <p class="note">
+                    <strong>Note:</strong> The application automatically detects your file format.
+                    Each label will be printed as a separate page, optimized for thermal printers at 203 DPI.
+                    Labels are automatically sorted by size (S→M→L→XL→2XL→3XL→4XL→5XL→6XL) for efficient garment picking.
+                    Enhanced format includes order details at the bottom of each label.
+                </p>
+            </div>
+
+            <div class="sample-data">
+                <h3>Example Data - Original Format:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                            <th>Datamatrix URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vintage T-Shirt Design</td>
+                            <td>M</td>
+                            <td>2</td>
+                            <td>https://example.com/datamatrix.png</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example Data - Enhanced Format:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order - Number</th>
+                            <th>Item - SKU</th>
+                            <th>Item - Name</th>
+                            <th>Item - Qty</th>
+                            <th>Market - Store Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>BR-47678</td>
+                            <td>BRSHIRT-THREATLEVEL-BK-L</td>
+                            <td>SOFT PREMIUM TEE - Black - L - The Office Threat Level...</td>
+                            <td>1</td>
+                            <td>Black Rabbit Shopify</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <span class="close">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="product-types">Product Types</button>
+                    <button class="tab-button" data-tab="shortening-rules">Shortening Rules</button>
+                    <button class="tab-button" data-tab="import-export">Import/Export</button>
+                </div>
+
+                <!-- Product Types Tab -->
+                <div id="product-types-tab" class="tab-content active">
+                    <div class="tab-header">
+                        <h3>Product Types</h3>
+                        <p>Manage the list of product types that can be recognized from CSV data.</p>
+                    </div>
+
+                    <div class="product-types-section">
+                        <div class="add-product-type">
+                            <input type="text" id="newProductType" placeholder="Enter new product type (e.g., 'Soft Premium Tee - Black')">
+                            <button id="addProductTypeBtn" class="btn-primary">Add</button>
+                        </div>
+
+                        <div class="product-types-list">
+                            <ul id="productTypesList" class="settings-list">
+                                <!-- Product types will be dynamically loaded here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shortening Rules Tab -->
+                <div id="shortening-rules-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h3>Shortening Rules</h3>
+                        <p>Configure how product types are shortened for better label display.</p>
+                    </div>
+
+                    <div class="shortening-rules-section">
+                        <div class="add-rule">
+                            <button id="addRuleBtn" class="btn-primary">Add New Rule</button>
+                        </div>
+
+                        <div class="rules-list">
+                            <div id="shorteningRulesList" class="rules-container">
+                                <!-- Shortening rules will be dynamically loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4>Test Rules</h4>
+                            <input type="text" id="testInput" placeholder="Enter product type to test">
+                            <button id="testRulesBtn" class="btn-secondary">Test</button>
+                            <div id="testResult" class="test-result"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Import/Export Tab -->
+                <div id="import-export-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h3>Import/Export</h3>
+                        <p>Backup, share, or restore your settings configuration.</p>
+                    </div>
+
+                    <div class="import-export-section">
+                        <div class="export-section">
+                            <h4>Export Settings</h4>
+                            <p>Download your current configuration as a JSON file.</p>
+                            <button id="exportBtn" class="btn-primary">Export Settings</button>
+                        </div>
+
+                        <div class="import-section">
+                            <h4>Import Settings</h4>
+                            <p>Upload a JSON configuration file to replace current settings.</p>
+                            <input type="file" id="importFile" accept=".json" style="display: none;">
+                            <button id="importBtn" class="btn-secondary">Import Settings</button>
+                        </div>
+
+                        <div class="reset-section">
+                            <h4>Reset to Defaults</h4>
+                            <p>⚠️ This will restore default settings and cannot be undone.</p>
+                            <button id="resetBtn" class="btn-danger">Reset to Defaults</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="saveSettingsBtn" class="btn-primary">Save Changes</button>
+                <button id="cancelSettingsBtn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
