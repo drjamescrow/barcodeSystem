@@ -206,6 +206,13 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             title.classList.remove('purple-flame');
         }, 10000);
+
+        // Trigger undertaker background slide-up for 10 seconds
+        const undertakerBg = document.getElementById('undertakerBackground');
+        undertakerBg.classList.add('active');
+        setTimeout(() => {
+            undertakerBg.classList.remove('active');
+        }, 10000);
     }
 
     function showError(message) {
