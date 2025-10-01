@@ -201,10 +201,10 @@ document.addEventListener('DOMContentLoaded', function() {
         audio.play().catch(err => console.log('Audio playback failed:', err));
 
         // Trigger purple flame animation on title for 10 seconds
-        const flameContainer = document.querySelector('.purple-flame-container');
-        flameContainer.classList.add('active');
+        const title = document.getElementById('mainTitle');
+        title.classList.add('purple-flame');
         setTimeout(() => {
-            flameContainer.classList.remove('active');
+            title.classList.remove('purple-flame');
         }, 10000);
     }
 
