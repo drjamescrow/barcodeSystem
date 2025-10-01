@@ -4,7 +4,9 @@
       "Bash(echo \"$file\")",
       "Bash(ls:*)",
       "Bash(done)",
-      "Read(//c/Users/richa/Downloads/**)"
+      "Read(//c/Users/richa/Downloads/**)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot"
     ],
     "deny": [],
     "ask": []

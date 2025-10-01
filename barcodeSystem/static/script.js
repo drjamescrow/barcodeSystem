@@ -194,6 +194,11 @@ document.addEventListener('DOMContentLoaded', function() {
         hideProgress();
         result.style.display = 'block';
         error.style.display = 'none';
+
+        // Play undertaker's bell at full volume
+        const audio = new Audio('/static/undertakers-bell_2UwFCIe.mp3');
+        audio.volume = 1.0;
+        audio.play().catch(err => console.log('Audio playback failed:', err));
     }
 
     function showError(message) {
