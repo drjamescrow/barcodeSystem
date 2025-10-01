@@ -1,4 +1,7 @@
 {
+  "default_label_size": "3x1",
+  "max_bins": 16,
+  "overflow_name": "THEPIT",
   "product_types": [
     "Soft Premium Tee - Black",
     "Soft Premium Tee - White",
@@ -201,8 +204,5 @@
       ],
       "pattern": "UNISEX FLEECE SWEAT SHORTS"
     }
-  ],
-  "max_bins": 12,
-  "overflow_name": "THEPIT",
-  "default_label_size": "3x1"
+  ]
 }

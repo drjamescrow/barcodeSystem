@@ -737,12 +737,10 @@ class LabelGenerator:
 
         # Generate and draw barcode (left side, middle area)
         if order_number:
-            # Check if this is an Amazon order (format: xxx-xxxxxxx-xxxxxxx)
-            # For Amazon orders, use only last 12 characters for barcode generation
+            # For 2×1 labels, limit barcode to last 12 characters if order number is longer
+            # This keeps barcodes readable while displaying full order number as text
             barcode_order_number = order_number
-            amazon_pattern = r'^\d{3}-\d{7}-\d{7}$'
-            if re.match(amazon_pattern, order_number):
-                # Amazon order detected - use last 12 characters for barcode
+            if len(order_number) > 12:
                 barcode_order_number = order_number[-12:]
 
             barcode_img = self.generate_order_barcode(barcode_order_number)
