@@ -39,6 +39,10 @@ header h1 {
     z-index: 2;
 }
 
+header h1.purple-flame {
+    animation: none;
+}
+
 header h1 .fire-char {
     color: #C4A574;
     transition: all 0.3s ease;
