@@ -199,6 +199,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const audio = new Audio('/static/undertakers-bell_2UwFCIe.mp3');
         audio.volume = 1.0;
         audio.play().catch(err => console.log('Audio playback failed:', err));
+
+        // Trigger purple flame animation on title
+        const title = document.querySelector('header h1');
+        title.classList.add('purple-flame');
     }
 
     function showError(message) {
