@@ -200,9 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
         audio.volume = 1.0;
         audio.play().catch(err => console.log('Audio playback failed:', err));
 
-        // Trigger purple flame animation on title
+        // Trigger purple flame animation on title for 10 seconds
         const title = document.querySelector('header h1');
         title.classList.add('purple-flame');
+        setTimeout(() => {
+            title.classList.remove('purple-flame');
+        }, 10000);
     }
 
     function showError(message) {
