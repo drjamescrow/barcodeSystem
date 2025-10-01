@@ -74,6 +74,14 @@ header h1.purple-flame .fire-char:nth-child(even) {
     animation: purpleFireAnimation 0.65s ease-in-out infinite alternate;
 }
 
+.download-btn.purple-flame .fire-char {
+    animation: purpleFireAnimation 1s ease-in-out infinite alternate;
+}
+
+.download-btn.purple-flame .fire-char:nth-child(even) {
+    animation: purpleFireAnimation 0.65s ease-in-out infinite alternate;
+}
+
 @keyframes purpleFireAnimation {
     0% {
         text-shadow:

@@ -211,6 +211,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 title.classList.remove('purple-flame');
             }, 10000);
 
+            // Trigger purple flame animation on download button for 20 seconds
+            const downloadBtn = document.getElementById('downloadLink');
+            downloadBtn.classList.add('purple-flame');
+            setTimeout(() => {
+                downloadBtn.classList.remove('purple-flame');
+            }, 20000);
+
             // Trigger undertaker background slide-up for 10 seconds
             const undertakerBg = document.getElementById('undertakerBackground');
             undertakerBg.classList.add('active');
