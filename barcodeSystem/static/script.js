@@ -195,24 +195,29 @@ document.addEventListener('DOMContentLoaded', function() {
         result.style.display = 'block';
         error.style.display = 'none';
 
-        // Play undertaker's bell at full volume
-        const audio = new Audio('/static/undertakers-bell_2UwFCIe.mp3');
-        audio.volume = 1.0;
-        audio.play().catch(err => console.log('Audio playback failed:', err));
+        // Check if Deadman Mode is enabled
+        const deadmanModeEnabled = currentSettings?.deadman_mode || false;
 
-        // Trigger purple flame animation on title for 10 seconds
-        const title = document.getElementById('mainTitle');
-        title.classList.add('purple-flame');
-        setTimeout(() => {
-            title.classList.remove('purple-flame');
-        }, 10000);
+        if (deadmanModeEnabled) {
+            // Play undertaker's bell at full volume
+            const audio = new Audio('/static/undertakers-bell_2UwFCIe.mp3');
+            audio.volume = 1.0;
+            audio.play().catch(err => console.log('Audio playback failed:', err));
 
-        // Trigger undertaker background slide-up for 10 seconds
-        const undertakerBg = document.getElementById('undertakerBackground');
-        undertakerBg.classList.add('active');
-        setTimeout(() => {
-            undertakerBg.classList.remove('active');
-        }, 10000);
+            // Trigger purple flame animation on title for 10 seconds
+            const title = document.getElementById('mainTitle');
+            title.classList.add('purple-flame');
+            setTimeout(() => {
+                title.classList.remove('purple-flame');
+            }, 10000);
+
+            // Trigger undertaker background slide-up for 10 seconds
+            const undertakerBg = document.getElementById('undertakerBackground');
+            undertakerBg.classList.add('active');
+            setTimeout(() => {
+                undertakerBg.classList.remove('active');
+            }, 10000);
+        }
     }
 
     function showError(message) {
@@ -374,6 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const maxBinsInput = document.getElementById('maxBinsInput');
         const overflowNameInput = document.getElementById('overflowNameInput');
         const defaultLabelSizeSelect = document.getElementById('defaultLabelSizeSelect');
+        const deadmanModeCheckbox = document.getElementById('deadmanModeCheckbox');
 
         if (maxBinsInput) {
             maxBinsInput.value = currentSettings.max_bins || 12;
@@ -383,6 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (defaultLabelSizeSelect) {
             defaultLabelSizeSelect.value = currentSettings.default_label_size || '3x1';
+        }
+        if (deadmanModeCheckbox) {
+            deadmanModeCheckbox.checked = currentSettings.deadman_mode || false;
         }
     }
 
@@ -588,6 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const maxBinsInput = document.getElementById('maxBinsInput');
             const overflowNameInput = document.getElementById('overflowNameInput');
             const defaultLabelSizeSelect = document.getElementById('defaultLabelSizeSelect');
+            const deadmanModeCheckbox = document.getElementById('deadmanModeCheckbox');
 
             if (maxBinsInput) {
                 currentSettings.max_bins = parseInt(maxBinsInput.value) || 12;
@@ -597,6 +607,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (defaultLabelSizeSelect) {
                 currentSettings.default_label_size = defaultLabelSizeSelect.value || '3x1';
+            }
+            if (deadmanModeCheckbox) {
+                currentSettings.deadman_mode = deadmanModeCheckbox.checked;
             }
 
             const response = await fetch('/api/settings', {
