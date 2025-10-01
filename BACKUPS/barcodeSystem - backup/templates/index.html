@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Generator - Thermal Printer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏷️ Label Generator</h1>
+            <p>Generate 2"×1" labels for thermal printers (203 DPI)</p>
+        </header>
+
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="file-input-container">
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="upload-icon">📁</div>
+                            <h3>Drop your file here or click to browse</h3>
+                            <p>Supports .xlsx and .csv files (max 10MB)</p>
+                            <input type="file" id="fileInput" name="file" accept=".xlsx,.csv" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <div class="file-details">
+                        <span id="fileName"></span>
+                        <span id="fileSize"></span>
+                    </div>
+                    <button type="button" id="removeFile" class="remove-btn">×</button>
+                </div>
+
+                <button type="submit" id="generateBtn" class="generate-btn" disabled>
+                    Generate Labels
+                </button>
+            </form>
+
+            <div id="progressContainer" class="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div id="progressBar" class="progress-fill"></div>
+                </div>
+                <p id="progressText">Processing...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;">
+                <div class="success-message">
+                    <h3>✅ Labels Generated Successfully!</h3>
+                    <p id="labelCount"></p>
+                    <a id="downloadLink" class="download-btn" href="#" download>
+                        📥 Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div id="error" class="error" style="display: none;">
+                <div class="error-message">
+                    <h3>❌ Error</h3>
+                    <p id="errorText"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📋 File Format Requirements</h2>
+            <div class="format-info">
+                <p>Your Excel (.xlsx) or CSV file must contain these columns:</p>
+                <ul>
+                    <li><strong>Product</strong> - Product name/title</li>
+                    <li><strong>Size</strong> - Size code (S, M, L, XL, etc.)</li>
+                    <li><strong>Quantity</strong> - Number of labels to generate</li>
+                    <li><strong>Datamatrix URL</strong> - URL to the DataMatrix image</li>
+                </ul>
+                <p class="note">
+                    <strong>Note:</strong> Each label will be printed as a separate page,
+                    optimized for thermal printers at 203 DPI. Labels are automatically
+                    sorted by size (S→M→L→XL→2XL→3XL→4XL→5XL→6XL) for efficient garment picking.
+                </p>
+            </div>
+
+            <div class="sample-data">
+                <h3>Example Data:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                            <th>Datamatrix URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vintage T-Shirt Design</td>
+                            <td>M</td>
+                            <td>2</td>
+                            <td>https://example.com/datamatrix.png</td>
+                        </tr>
+                        <tr>
+                            <td>Classic Hoodie</td>
+                            <td>L</td>
+                            <td>1</td>
+                            <td>https://example.com/datamatrix2.png</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

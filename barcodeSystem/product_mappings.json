@@ -201,5 +201,8 @@
       ],
       "pattern": "UNISEX FLEECE SWEAT SHORTS"
     }
-  ]
+  ],
+  "max_bins": 12,
+  "overflow_name": "THEPIT",
+  "default_label_size": "3x1"
 }

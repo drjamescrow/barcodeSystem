@@ -177,6 +177,7 @@
                 <div class="tabs">
                     <button class="tab-button active" data-tab="product-types">Product Types</button>
                     <button class="tab-button" data-tab="shortening-rules">Shortening Rules</button>
+                    <button class="tab-button" data-tab="application-settings">Application Settings</button>
                     <button class="tab-button" data-tab="import-export">Import/Export</button>
                 </div>
 
@@ -224,6 +225,42 @@
                             <input type="text" id="testInput" placeholder="Enter product type to test">
                             <button id="testRulesBtn" class="btn-secondary">Test</button>
                             <div id="testResult" class="test-result"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Settings Tab -->
+                <div id="application-settings-tab" class="tab-content">
+                    <div class="tab-header">
+                        <h3>Application Settings</h3>
+                        <p>Configure default application behavior and label settings.</p>
+                    </div>
+
+                    <div class="application-settings-section">
+                        <div class="setting-group">
+                            <h4>Binning System</h4>
+                            <div class="setting-field">
+                                <label for="maxBinsInput">Maximum Number of Bins</label>
+                                <input type="number" id="maxBinsInput" min="1" value="12" placeholder="Enter maximum bins (e.g., 12)">
+                                <p class="field-description">Multi-item orders are assigned bins 1 through this number. Orders exceeding this limit go to the overflow area.</p>
+                            </div>
+                            <div class="setting-field">
+                                <label for="overflowNameInput">Overflow Area Name</label>
+                                <input type="text" id="overflowNameInput" value="THEPIT" placeholder="Enter overflow area name (e.g., THEPIT)">
+                                <p class="field-description">Name displayed on labels for orders exceeding the maximum bin count.</p>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h4>Label Defaults</h4>
+                            <div class="setting-field">
+                                <label for="defaultLabelSizeSelect">Default Label Size</label>
+                                <select id="defaultLabelSizeSelect">
+                                    <option value="2x1">2" × 1"</option>
+                                    <option value="3x1" selected>3" × 1"</option>
+                                </select>
+                                <p class="field-description">The label size that is pre-selected when the page loads.</p>
+                            </div>
                         </div>
                     </div>
                 </div>

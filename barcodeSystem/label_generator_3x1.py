@@ -55,6 +55,8 @@ class LabelGenerator3x1:
                     config = json.load(f)
                     self.product_types = config.get('product_types', [])
                     self.shortening_rules = config.get('shortening_rules', [])
+                    self.max_bins = config.get('max_bins', 12)
+                    self.overflow_name = config.get('overflow_name', 'THEPIT')
             else:
                 # Fallback to default configuration if file doesn't exist
                 self.product_types = [
@@ -70,6 +72,8 @@ class LabelGenerator3x1:
                     'Trucker Hat'
                 ]
                 self.shortening_rules = []
+                self.max_bins = 12
+                self.overflow_name = 'THEPIT'
         except (json.JSONDecodeError, FileNotFoundError) as e:
             print(f"Error loading configuration: {e}. Using defaults.")
             # Use default fallback
@@ -79,6 +83,8 @@ class LabelGenerator3x1:
                 'Luxury Heavy Tee - Black'
             ]
             self.shortening_rules = []
+            self.max_bins = 12
+            self.overflow_name = 'THEPIT'
 
     def reload_configuration(self):
         """Reload configuration from file - useful for settings updates"""
@@ -842,9 +848,11 @@ class LabelGenerator3x1:
         # "BIN Y" text (10pt bold, only if multi-item order)
         if total_items > 1:
             c.setFont("Helvetica-Bold", 10)
-            if bin_number == "THEPIT":
-                bin_text = "THEPIT"
+            if isinstance(bin_number, str):
+                # Overflow bin - display as-is
+                bin_text = bin_number
             else:
+                # Numbered bin
                 bin_text = f"BIN {bin_number}"
             bin_text_width = c.stringWidth(bin_text, "Helvetica-Bold", 10)
             bin_text_x = self.label_width - bin_text_width - self.margin
@@ -870,11 +878,11 @@ class LabelGenerator3x1:
 
         for order in df_sorted['OrderNumber'].unique():
             if order in multi_item_orders:
-                # Assign bin number (1-12, then "THEPIT")
-                if bin_counter <= 12:
+                # Assign bin number (1-max_bins, then overflow)
+                if bin_counter <= self.max_bins:
                     bin_assignments[order] = bin_counter
                 else:
-                    bin_assignments[order] = "THEPIT"
+                    bin_assignments[order] = self.overflow_name
                 bin_counter += 1
             else:
                 bin_assignments[order] = None  # Single-item order

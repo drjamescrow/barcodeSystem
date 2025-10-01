@@ -88,7 +88,10 @@ def get_settings():
                     "Luxury Heavy Tee - Vintage Black",
                     "Luxury Heavy Tee - Stone Wash"
                 ],
-                "shortening_rules": []
+                "shortening_rules": [],
+                "max_bins": 12,
+                "overflow_name": "THEPIT",
+                "default_label_size": "3x1"
             }
             return jsonify(default_config)
     except Exception as e:
@@ -103,8 +106,10 @@ def save_settings():
             return jsonify({'error': 'No data provided'}), 400
 
         # Validate the structure
-        if 'product_types' not in data or 'shortening_rules' not in data:
-            return jsonify({'error': 'Invalid configuration structure'}), 400
+        required_fields = ['product_types', 'shortening_rules', 'max_bins', 'overflow_name', 'default_label_size']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
 
         # Validate product_types is a list
         if not isinstance(data['product_types'], list):
@@ -117,6 +122,18 @@ def save_settings():
         for rule in data['shortening_rules']:
             if not isinstance(rule, dict) or 'pattern' not in rule or 'conditions' not in rule:
                 return jsonify({'error': 'Invalid shortening rule structure'}), 400
+
+        # Validate max_bins
+        if not isinstance(data['max_bins'], int) or data['max_bins'] < 1:
+            return jsonify({'error': 'max_bins must be an integer >= 1'}), 400
+
+        # Validate overflow_name
+        if not isinstance(data['overflow_name'], str) or not data['overflow_name'].strip():
+            return jsonify({'error': 'overflow_name must be a non-empty string'}), 400
+
+        # Validate default_label_size
+        if data['default_label_size'] not in ['2x1', '3x1']:
+            return jsonify({'error': 'default_label_size must be either "2x1" or "3x1"'}), 400
 
         # Save to file
         config_file = 'product_mappings.json'

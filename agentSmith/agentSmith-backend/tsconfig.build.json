@@ -1,0 +1,39 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /* Production Build Optimizations */
+    "sourceMap": true,
+    "removeComments": true,
+    "declaration": false,
+    "declarationMap": false,
+    
+    /* Output Configuration */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    
+    /* Module Resolution */
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    
+    /* Performance Optimizations */
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.js",
+    "src/**/*.spec.js",
+    "node_modules",
+    "dist",
+    "coverage",
+    "**/*.d.ts",
+    "jest.config.js",
+    "jest.config.ts"
+  ]
+}

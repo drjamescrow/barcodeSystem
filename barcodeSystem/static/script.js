@@ -274,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSettings = await response.json();
             renderProductTypes();
             renderShorteningRules();
+            renderApplicationSettings();
         } catch (error) {
             console.error('Error loading settings:', error);
             alert('Failed to load settings. Please try again.');
@@ -347,6 +348,55 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             container.appendChild(ruleDiv);
         });
+    }
+
+    // Render application settings
+    function renderApplicationSettings() {
+        const maxBinsInput = document.getElementById('maxBinsInput');
+        const overflowNameInput = document.getElementById('overflowNameInput');
+        const defaultLabelSizeSelect = document.getElementById('defaultLabelSizeSelect');
+
+        if (maxBinsInput) {
+            maxBinsInput.value = currentSettings.max_bins || 12;
+        }
+        if (overflowNameInput) {
+            overflowNameInput.value = currentSettings.overflow_name || 'THEPIT';
+        }
+        if (defaultLabelSizeSelect) {
+            defaultLabelSizeSelect.value = currentSettings.default_label_size || '3x1';
+        }
+    }
+
+    // Apply default label size from settings
+    function applyDefaultLabelSize() {
+        const defaultSize = currentSettings.default_label_size || '3x1';
+        const toggleButtons = document.querySelectorAll('.toggle-btn');
+        const labelSizeInput = document.getElementById('labelSizeInput');
+        const headerSubtitle = document.getElementById('headerSubtitle');
+
+        // Update the toggle buttons
+        toggleButtons.forEach(btn => {
+            const btnSize = btn.getAttribute('data-size');
+            if (btnSize === defaultSize) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update the hidden input
+        if (labelSizeInput) {
+            labelSizeInput.value = defaultSize;
+        }
+
+        // Update header subtitle
+        if (headerSubtitle) {
+            if (defaultSize === '3x1') {
+                headerSubtitle.textContent = 'Generate 3"×1" labels for thermal printers (203 DPI)';
+            } else {
+                headerSubtitle.textContent = 'Generate 2"×1" labels for thermal printers (203 DPI)';
+            }
+        }
     }
 
     // Product type management
@@ -515,6 +565,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save settings
     saveSettingsBtn.addEventListener('click', async () => {
         try {
+            // Update application settings from form fields
+            const maxBinsInput = document.getElementById('maxBinsInput');
+            const overflowNameInput = document.getElementById('overflowNameInput');
+            const defaultLabelSizeSelect = document.getElementById('defaultLabelSizeSelect');
+
+            if (maxBinsInput) {
+                currentSettings.max_bins = parseInt(maxBinsInput.value) || 12;
+            }
+            if (overflowNameInput) {
+                currentSettings.overflow_name = overflowNameInput.value.trim() || 'THEPIT';
+            }
+            if (defaultLabelSizeSelect) {
+                currentSettings.default_label_size = defaultLabelSizeSelect.value || '3x1';
+            }
+
             const response = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -526,6 +591,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             alert('Settings saved successfully!');
             settingsModal.style.display = 'none';
+
+            // Apply default label size if it changed
+            applyDefaultLabelSize();
         } catch (error) {
             alert('Failed to save settings: ' + error.message);
         }
@@ -634,4 +702,17 @@ document.addEventListener('DOMContentLoaded', function() {
             renderShorteningRules();
         }
     };
+
+    // Load settings on page load to apply default label size
+    (async function initializeSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            if (response.ok) {
+                currentSettings = await response.json();
+                applyDefaultLabelSize();
+            }
+        } catch (error) {
+            console.error('Error loading initial settings:', error);
+        }
+    })();
 });
