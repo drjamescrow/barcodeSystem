@@ -4,6 +4,7 @@ import io
 import json
 import secrets
 import logging
+import time
 from logging.handlers import RotatingFileHandler
 from werkzeug.utils import secure_filename
 from label_generator import LabelGenerator
@@ -44,6 +45,50 @@ app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
 app.logger.info('Label Generator application startup')
+
+# Cleanup orphaned temp files on startup
+def cleanup_orphaned_temp_files(max_age_hours=24):
+    """
+    Delete orphaned temp PDF files on application startup.
+    This catches files that were left behind from service restarts or crashes.
+
+    Args:
+        max_age_hours: Delete files older than this many hours (default: 24)
+    """
+    try:
+        temp_dir = tempfile.gettempdir()
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+
+        deleted_count = 0
+        deleted_size = 0
+
+        # Find all tmp*.pdf files in temp directory
+        for filename in os.listdir(temp_dir):
+            if filename.startswith('tmp') and filename.endswith('.pdf'):
+                filepath = os.path.join(temp_dir, filename)
+                try:
+                    # Check file age
+                    file_age = current_time - os.path.getmtime(filepath)
+                    if file_age > max_age_seconds:
+                        file_size = os.path.getsize(filepath)
+                        os.unlink(filepath)
+                        deleted_count += 1
+                        deleted_size += file_size
+                        app.logger.debug(f'Deleted orphaned temp file: {filename} (age: {file_age/3600:.1f}h)')
+                except Exception as e:
+                    app.logger.warning(f'Failed to delete orphaned temp file {filename}: {e}')
+
+        if deleted_count > 0:
+            app.logger.info(f'Startup cleanup: Deleted {deleted_count} orphaned temp files ({deleted_size/1024/1024:.2f} MB)')
+        else:
+            app.logger.info('Startup cleanup: No orphaned temp files found')
+
+    except Exception as e:
+        app.logger.error(f'Error during startup temp file cleanup: {e}', exc_info=True)
+
+# Run cleanup on startup
+cleanup_orphaned_temp_files()
 
 ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
 
