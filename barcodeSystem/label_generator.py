@@ -18,6 +18,7 @@ import re
 from datetime import datetime
 import barcode
 from barcode.writer import ImageWriter
+import treepoem
 
 class LabelGenerator:
     def __init__(self):
@@ -42,6 +43,9 @@ class LabelGenerator:
 
         # Barcode cache for order numbers
         self.barcode_cache = {}
+
+        # DataMatrix cache for order numbers
+        self.datamatrix_cache = {}
 
         # Load configuration from JSON file
         self.config_file = 'product_mappings.json'
@@ -646,6 +650,40 @@ class LabelGenerator:
             print(f"Error generating barcode for {order_number}: {e}")
             return None
 
+    def generate_order_datamatrix(self, order_number):
+        """Generate a DataMatrix code from order number"""
+        if not order_number:
+            return None
+
+        # Check cache first
+        if order_number in self.datamatrix_cache:
+            return self.datamatrix_cache[order_number]
+
+        try:
+            # Generate DataMatrix using treepoem
+            img = treepoem.generate_barcode(
+                barcode_type='datamatrix',
+                data=order_number
+            )
+
+            # Convert to grayscale, then to black and white for crisp edges (same as product DataMatrix)
+            img = img.convert('L')  # Grayscale
+            img = img.point(lambda x: 0 if x < 128 else 255, '1')  # Binary B&W
+
+            # Resize to target size (match the product DataMatrix size)
+            target_size = (int(self.datamatrix_size * self.dpi / 72),
+                          int(self.datamatrix_size * self.dpi / 72))
+            img = img.resize(target_size, Image.NEAREST)
+
+            # Cache the DataMatrix image
+            self.datamatrix_cache[order_number] = img
+
+            return img
+
+        except Exception as e:
+            print(f"Error generating DataMatrix for {order_number}: {e}")
+            return None
+
     def sort_by_size(self, df):
         """Sort dataframe by size in garment picking order"""
         # Define size order for optimal picking workflow
@@ -748,33 +786,22 @@ class LabelGenerator:
             line_y = title_start_y - (i * (self.title_font_size + 2))
             c.drawString(self.margin, line_y, line)
 
-        # Generate and draw barcode (left side, middle area)
+        # Generate and draw DataMatrix for order number (bottom left corner)
         if order_number:
-            barcode_img = self.generate_order_barcode(order_number)
-            if barcode_img:
-                # Calculate maximum available space for barcode
-                # Available vertical space: from below title to above bottom text
-                # Bottom text starts at ~14 points (2 rows × 4pt + margins)
-                # Title ends at approximately title_start_y - (2 lines × 6pt) = ~50 points from top
+            order_datamatrix_img = self.generate_order_datamatrix(order_number)
+            if order_datamatrix_img:
+                # Position DataMatrix at bottom left corner
+                datamatrix_x = self.margin
+                datamatrix_y = self.margin
 
-                # Position barcode on left side, maximizing size
-                # Always use the same dimensions regardless of barcode content
-                barcode_width = 1.32 * inch  # ~95 points (increased by 20% from 1.1")
-                barcode_height = 0.4 * inch - 4  # ~25 points (reduced by 4 points from original)
-                barcode_x = self.margin
-
-                # Center vertically in available middle space
-                # Available space is roughly from y=16 to y=45
-                barcode_y = 16  # Position to maximize size without overlap
-
-                # Draw barcode image - do NOT preserve aspect ratio to ensure consistent size
+                # Draw DataMatrix image
                 c.drawImage(
-                    ImageReader(barcode_img),
-                    barcode_x,
-                    barcode_y,
-                    width=barcode_width,
-                    height=barcode_height,
-                    preserveAspectRatio=False  # Force to fill the entire space
+                    ImageReader(order_datamatrix_img),
+                    datamatrix_x,
+                    datamatrix_y,
+                    width=self.datamatrix_size,
+                    height=self.datamatrix_size,
+                    preserveAspectRatio=True
                 )
 
         # Draw DataMatrix image (top right corner)
@@ -803,7 +830,7 @@ class LabelGenerator:
             front_text_y = datamatrix_y - 6  # 6 points below the DataMatrix
             c.drawString(front_text_x, front_text_y, front_text)
 
-        # Draw bottom text in 2 rows with order details
+        # Draw bottom text in 2 rows with order details (positioned above DataMatrix)
         c.setFont("Helvetica-Bold", self.bottom_text_font_size)
         max_bottom_width = self.label_width - 2 * self.margin
 
@@ -833,9 +860,11 @@ class LabelGenerator:
         while c.stringWidth(bottom_row_2_text, "Helvetica-Bold", self.bottom_text_font_size) > max_bottom_width and bottom_row_2_text:
             bottom_row_2_text = bottom_row_2_text[:-1]
 
-        # Position both rows at bottom
-        bottom_row_1_y = self.margin + (self.bottom_text_font_size + 2) + 2
-        bottom_row_2_y = self.margin + 2
+        # Position both rows above the DataMatrix (instead of at very bottom)
+        # DataMatrix occupies: y = margin to y = margin + datamatrix_size
+        # Text starts just above the DataMatrix
+        bottom_row_2_y = self.margin + self.datamatrix_size + 2  # 2pt gap above DataMatrix
+        bottom_row_1_y = bottom_row_2_y + self.bottom_text_font_size + 2  # Second row above first row
 
         # Draw both rows
         if bottom_row_1_text:

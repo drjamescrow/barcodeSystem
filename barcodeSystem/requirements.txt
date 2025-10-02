@@ -6,3 +6,4 @@ Pillow==10.4.0
 requests==2.32.3
 gunicorn==21.2.0
 python-barcode==0.15.1
+treepoem>=3.23.0
