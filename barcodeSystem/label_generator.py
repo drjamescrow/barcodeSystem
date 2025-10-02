@@ -239,11 +239,13 @@ class LabelGenerator:
         text_length = len(clean_text)
 
         # Check what comes after the product type to determine pattern
-        remaining_text = clean_text[product_type_end:].strip(' -,')
+        remaining_text = clean_text[product_type_end:].strip(' -,/')
 
         # If what follows is only a size/color pattern with no additional text,
         # then we have "Title - Product Type - Size" pattern
-        after_product_type_pattern = r'^([SML]|[0-9]*XL|X{1,6}-?Large|Small|Medium|Large|Orange\s+Camo|Black/White|Black/Black|White/Black|Red|Pepper)(\s+(Camo|Black|White))?$'
+        # IMPORTANT: Put longer patterns BEFORE shorter ones to avoid partial matches
+        # Support hyphenated forms like "3X-Large" and abbreviated forms like "3XL"
+        after_product_type_pattern = r'^([0-9]+X-Large|[0-9]+XL|XL(?![A-Z])|X{1,6}-?Large|Small|Medium|Large|[SML](?![A-Z])|Orange\s+Camo|Black/White|Black/Black|White/Black|Red|Pepper)(\s+(Camo|Black|White))?$'
         is_only_size_color_after = bool(re.match(after_product_type_pattern, remaining_text, re.IGNORECASE))
 
         # Consider product type at "end" if it's in the last 50% of the string OR only size/color follows
@@ -255,13 +257,15 @@ class LabelGenerator:
         if is_product_type_at_end:
             # Pattern: Title - Product Type - Size/Color
             # Extract title from beginning up to product type
-            title = clean_text[:product_type_start].strip(' -,')
+            title = clean_text[:product_type_start].strip(' -,/')
 
-            # Look for size/color after product type
-            remaining_text = clean_text[product_type_end:].strip(' -,')
+            # Look for size/color after product type (supports comma, dash, and forward slash separators)
+            remaining_text = clean_text[product_type_end:].strip(' -,/')
             if remaining_text:
                 # Try to extract size from the remaining text
-                size_pattern = r'^([SML]|[0-9]*XL|X{1,6}-?Large|Small|Medium|Large|Orange\s+Camo|Black/White|Black/Black|White/Black)\b'
+                # IMPORTANT: Order matters! Match longest patterns first
+                # Match patterns like "3X-Large", "6X-Large", "3XL", "XL", "L" in that order
+                size_pattern = r'^([0-9]+X-Large|[0-9]+XL|XL(?![A-Z])|X{1,6}-?Large|Small|Medium|Large|[SML](?![A-Z])|Orange\s+Camo|Black/White|Black/Black|White/Black)\b'
                 size_match = re.search(size_pattern, remaining_text, re.IGNORECASE)
                 if size_match:
                     potential_size = size_match.group(1)
@@ -271,22 +275,25 @@ class LabelGenerator:
         else:
             # Original pattern: Product Type - Color - Size - Title
             # Extract size - look for specific size patterns after color
-            # Enhanced patterns to support both dash and comma separators, and spelled-out sizes
-            size_pattern = r'-\s*(Black|White|Vintage Black|Stone Wash|Pepper)[-,]\s*([SML]|[0-9]*XL|X{1,6}-?Large|Small|Medium|Large)\s*[-,]'
+            # Support dash, comma, and forward slash separators
+            # IMPORTANT: Order matters! Match longest patterns first
+            size_pattern = r'-\s*(Black|White|Vintage Black|Stone Wash|Pepper)[-,/]\s*([0-9]+X-Large|[0-9]+XL|XL(?![A-Z])|X{1,6}-?Large|Small|Medium|Large|[SML](?![A-Z]))\s*[-,/]'
             size_match = re.search(size_pattern, clean_text, re.IGNORECASE)
 
             if size_match:
                 size = self.normalize_size(size_match.group(2))
             else:
-                # Fallback: look for size patterns after any dash or comma
-                fallback_size = r'[-,]\s*([SML]|[0-9]*XL|X{1,6}-?Large|Small|Medium|Large)\s*([-,]|$)'
+                # Fallback: look for size patterns after any dash, comma, or forward slash
+                # IMPORTANT: Order matters! Match longest patterns first
+                fallback_size = r'[-,/]\s*([0-9]+X-Large|[0-9]+XL|XL(?![A-Z])|X{1,6}-?Large|Small|Medium|Large|[SML](?![A-Z]))\s*([-,/]|$)'
                 size_match = re.search(fallback_size, clean_text, re.IGNORECASE)
                 if size_match:
                     size = self.normalize_size(size_match.group(1))
 
             # Extract the title (everything after size)
-            # Enhanced pattern to handle both abbreviated and spelled-out sizes
-            title_pattern = r'[-,]\s*([SML]|[0-9]*XL|X{1,6}-?Large|Small|Medium|Large)\s*[-,]\s*(.*?)$'
+            # Support dash, comma, and forward slash separators
+            # IMPORTANT: Order matters! Match longest patterns first
+            title_pattern = r'[-,/]\s*([0-9]+X-Large|[0-9]+XL|XL(?![A-Z])|X{1,6}-?Large|Small|Medium|Large|[SML](?![A-Z]))\s*[-,/]\s*(.*?)$'
             title_match = re.search(title_pattern, clean_text, re.IGNORECASE)
 
             if title_match:
@@ -388,7 +395,13 @@ class LabelGenerator:
             'XXX-LARGE': '3XL',
             'XXXX-LARGE': '4XL',
             'XXXXX-LARGE': '5XL',
-            'XXXXXX-LARGE': '6XL'
+            'XXXXXX-LARGE': '6XL',
+            # Support numbered hyphenated forms like "3X-LARGE"
+            '2X-LARGE': '2XL',
+            '3X-LARGE': '3XL',
+            '4X-LARGE': '4XL',
+            '5X-LARGE': '5XL',
+            '6X-LARGE': '6XL'
         }
 
         # Return mapped value if found, otherwise return original (for already abbreviated sizes)
@@ -737,13 +750,7 @@ class LabelGenerator:
 
         # Generate and draw barcode (left side, middle area)
         if order_number:
-            # For 2×1 labels, limit barcode to last 12 characters if order number is longer
-            # This keeps barcodes readable while displaying full order number as text
-            barcode_order_number = order_number
-            if len(order_number) > 12:
-                barcode_order_number = order_number[-12:]
-
-            barcode_img = self.generate_order_barcode(barcode_order_number)
+            barcode_img = self.generate_order_barcode(order_number)
             if barcode_img:
                 # Calculate maximum available space for barcode
                 # Available vertical space: from below title to above bottom text
@@ -930,3 +937,172 @@ class LabelGenerator:
         buffer.seek(0)
 
         return buffer, label_count
+
+    def validate_file_and_generate_report(self, file):
+        """Validate file and generate detailed report of matched/unmatched rows"""
+        # Read file based on extension
+        filename = file.filename.lower()
+
+        if filename.endswith('.xlsx'):
+            df = pd.read_excel(file)
+        elif filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            raise ValueError("File must be .xlsx or .csv")
+
+        # Detect format
+        file_format = self.detect_file_format(df)
+
+        if file_format == 'old':
+            return self._validate_old_format(df)
+        else:
+            return self._validate_new_format(df)
+
+    def _validate_old_format(self, df):
+        """Validate old format file"""
+        # Validate required columns
+        required_columns = ['Product', 'Size', 'Quantity', 'Datamatrix URL']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
+
+        total_rows = len(df)
+        matched_rows = []
+        unmatched_rows = []
+
+        # In old format, all rows with required columns are considered valid
+        for idx, row in df.iterrows():
+            row_data = {
+                'row_number': idx + 2,  # +2 because Excel is 1-indexed and has header row
+                'product': str(row.get('Product', '')),
+                'size': str(row.get('Size', '')),
+                'quantity': str(row.get('Quantity', '')),
+                'datamatrix_url': str(row.get('Datamatrix URL', ''))
+            }
+
+            # Check if row has all required data
+            if pd.notna(row['Product']) and pd.notna(row['Size']) and pd.notna(row['Quantity']):
+                matched_rows.append(row_data)
+            else:
+                unmatched_rows.append(row_data)
+
+        return {
+            'format': 'old',
+            'total_rows': total_rows,
+            'matched_count': len(matched_rows),
+            'unmatched_count': len(unmatched_rows),
+            'matched_rows': matched_rows[:100],  # Limit to first 100 for performance
+            'unmatched_rows': unmatched_rows,
+            'suggestions': []
+        }
+
+    def _validate_new_format(self, df):
+        """Validate new format file and generate detailed report"""
+        # Validate required columns
+        required_columns = ['Item - Name', 'Item - Qty', 'Item - Image URL']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+
+        if missing_columns:
+            raise ValueError(f"Missing required columns for new format: {', '.join(missing_columns)}")
+
+        # Filter out rows without SKUs (like promotional items)
+        df_filtered = df[df['Item - SKU'].notna() & (df['Item - SKU'] != '')].copy()
+
+        if df_filtered.empty:
+            raise ValueError("No valid product rows found in the file.")
+
+        total_rows = len(df_filtered)
+        matched_rows = []
+        unmatched_rows = []
+        unmatched_item_names = []  # For generating suggestions
+
+        # Process each row
+        for idx, row in df_filtered.iterrows():
+            item_name = row['Item - Name']
+            parsed_item = self.parse_item_name(item_name)
+
+            row_data = {
+                'row_number': idx + 2,  # +2 because Excel is 1-indexed and has header row
+                'item_name': str(item_name),
+                'order_number': str(row.get('Order - Number', '')),
+                'sku': str(row.get('Item - SKU', ''))
+            }
+
+            if parsed_item:
+                # Successfully matched
+                row_data['matched_product_type'] = parsed_item['product_type']
+                row_data['size'] = parsed_item['size']
+                row_data['title'] = parsed_item['title']
+                matched_rows.append(row_data)
+            else:
+                # Failed to match
+                unmatched_rows.append(row_data)
+                # Clean HTML and store for suggestions
+                clean_text = re.sub(r'<[^>]+>', '', str(item_name))
+                unmatched_item_names.append(clean_text)
+
+        # Generate suggestions from unmatched items
+        suggestions = self._generate_product_type_suggestions(unmatched_item_names)
+
+        return {
+            'format': 'new',
+            'total_rows': total_rows,
+            'matched_count': len(matched_rows),
+            'unmatched_count': len(unmatched_rows),
+            'matched_rows': matched_rows[:100],  # Limit to first 100 for performance
+            'unmatched_rows': unmatched_rows,
+            'suggestions': suggestions
+        }
+
+    def _generate_product_type_suggestions(self, unmatched_names):
+        """Generate product type suggestions from unmatched item names"""
+        if not unmatched_names:
+            return []
+
+        suggestions = []
+
+        # Extract potential product type patterns
+        # Look for common multi-word phrases that appear before sizes or at the beginning
+        pattern_counts = {}
+
+        for name in unmatched_names:
+            # Look for patterns like "Product Name - Color" before size indicators
+            # Remove size patterns first
+            cleaned = re.sub(r'\b([SML]|[0-9]*XL|X{1,6}-?Large|Small|Medium|Large)\b', '', name, flags=re.IGNORECASE)
+
+            # Split by common separators
+            parts = re.split(r'[-,]', cleaned)
+
+            # Take the first 2-3 meaningful parts
+            for i, part in enumerate(parts[:3]):
+                part = part.strip()
+                if len(part) > 3 and not part.isdigit():  # Ignore very short or numeric parts
+                    # Normalize the part
+                    normalized = ' '.join(part.split())
+                    if normalized:
+                        pattern_counts[normalized] = pattern_counts.get(normalized, 0) + 1
+
+        # Get patterns that appear more than once or are substantial
+        suggested_patterns = []
+        for pattern, count in sorted(pattern_counts.items(), key=lambda x: (-x[1], x[0])):
+            if count > 1 or (count == 1 and len(unmatched_names) == 1):
+                suggested_patterns.append(pattern)
+            if len(suggested_patterns) >= 10:  # Limit to top 10 suggestions
+                break
+
+        # Also extract base product types (first significant phrase)
+        base_types = set()
+        for name in unmatched_names:
+            # Look for the first substantial phrase (2-4 words)
+            words = name.split()
+            for i in range(min(4, len(words))):
+                phrase = ' '.join(words[:i+2])
+                if len(phrase) > 10:  # Substantial phrase
+                    base_types.add(phrase.strip())
+                    break
+
+        # Combine and deduplicate suggestions
+        all_suggestions = list(set(suggested_patterns + list(base_types)))
+
+        return all_suggestions[:15]  # Return top 15 unique suggestions
