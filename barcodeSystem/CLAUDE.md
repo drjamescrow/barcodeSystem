@@ -6,8 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Setup and Dependencies
 ```bash
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install Ghostscript (required for DataMatrix generation on 2x1 labels)
+# Windows: Download from https://ghostscript.com/releases/gsdnld.html
+# Linux/Mac: apt-get install ghostscript (or brew install ghostscript)
+# Docker: Automatically installed via Dockerfile
 ```
 
 ### Running the Application
@@ -82,12 +87,13 @@ This is a Flask web application that generates thermal printer labels from Excel
 - `extract_title_before_product_type()` - Extracts title text that appears before the product type
 - `format_date()` - Converts various date formats to short format for labels
 - `fetch_datamatrix_image()` - Downloads and caches DataMatrix images from URLs, converts to high-contrast B&W
-- `generate_order_barcode()` - Generates Code 128 barcodes from order numbers with dynamic width adjustment
+- `generate_order_barcode()` - Generates Code 128 barcodes from order numbers (used in 3×1 labels)
+- `generate_order_datamatrix()` - Generates DataMatrix codes from order numbers using treepoem (used in 2×1 labels)
 - `wrap_text()` - Wraps text to fit within specified width (max 2 lines)
 - `sort_by_size()` - Sorts labels by garment size (S→M→L→XL→2XL→3XL→4XL→5XL→6XL) for optimal picking workflow
 - `sort_hierarchically()` - Sorts by rule order, condition order, then size for enhanced format
 - `create_label_page()` - Generates basic label pages (original format)
-- `create_enhanced_label_page()` - Generates enhanced labels with barcode, order details, and DataMatrix
+- `create_enhanced_label_page()` - Generates enhanced labels with order DataMatrix, order details, and product DataMatrix
 - `generate_pdf()` - PDF generation for original format
 - `generate_enhanced_pdf()` - PDF generation for enhanced format with order details and bin assignment
 
@@ -95,6 +101,7 @@ This is a Flask web application that generates thermal printer labels from Excel
 - Inherits same functionality as `label_generator.py` but with adjusted dimensions
 - Label dimensions: 3"×1" (216×72 points) instead of 2"×1" (144×72 points)
 - Wider layout allows for better text spacing and larger barcode areas
+- Uses Code 128 barcodes for order numbers (vs DataMatrix in 2×1)
 - Title area uses 65% of width (vs 70% in 2×1) for better proportions
 - Supports same bin system configuration (max_bins, overflow_name)
 - Enhanced format includes bin name prominently displayed at top of label for warehouse organization
@@ -116,8 +123,10 @@ This is a Flask web application that generates thermal printer labels from Excel
    - Original format: By garment size for efficient picking
    - Enhanced format: Hierarchically by bin, rule order, condition order, then size
 8. For each row:
-   - DataMatrix images are fetched from URLs and cached
-   - Order number barcodes (Code 128) are generated and cached
+   - Product DataMatrix images are fetched from URLs and cached
+   - Order number codes are generated and cached:
+     - 2×1 labels: DataMatrix codes generated using treepoem
+     - 3×1 labels: Code 128 barcodes generated using python-barcode
 9. PDF is generated with one label per page:
    - 2"×1" labels: 144×72 points at 203 DPI
    - 3"×1" labels: 216×72 points at 203 DPI
@@ -142,23 +151,25 @@ Original Format:
 - DataMatrix: Right side, 0.6" square, fetched from URL
 
 Enhanced Format:
-- Bin name: Top left corner (when applicable), 10pt bold font
 - Product type: Top left, 10pt bold font (dynamically shortened per configuration)
 - Size: Top right (same line as product type), bold 10pt font
 - Product title: Left side, 4pt bold font, word-wrapped (max 2 lines)
-- Order barcode: Left side middle area, Code 128 format, 1.32" × 0.4" (dynamically sized)
-- DataMatrix: Right side middle area, 0.3825" square, fetched from URL
-- Order details: Bottom, 4pt bold font in 2 rows:
+- Product DataMatrix: Top right corner, 0.3825" square, fetched from URL
+- "FRONT" text: Below product DataMatrix in 6pt font
+- Order DataMatrix: Bottom left corner, 0.3825" square, generated from order number
+- Order details: Above order DataMatrix, 4pt bold font in 2 rows:
   - Row 1: Order Number | SKU
   - Row 2: Store Name | Ship Date
+- Item counter: Bottom right, "X of Y" in 8pt bold font
+- Bin name: Bottom right (when multi-item), "BIN X" in 10pt bold font
 
 *3" × 1" Labels (216×72 points):*
 
 Same layout as 2"×1" but with:
 - Wider spacing for better readability
-- Larger barcode area for improved scanning
+- Code 128 barcode for order numbers (center-left area, 2.2" × 0.4") instead of DataMatrix
 - Title area uses 65% of width (vs 70% in 2×1)
-- DataMatrix remains at 0.45" square
+- Product DataMatrix remains at 0.45" square (top right)
 - Better accommodation for longer product titles and order numbers
 
 **Configuration System**: Product types and shortening rules are stored in `product_mappings.json` and can be dynamically updated via the web interface settings API. Rules support pattern matching and conditional transformations with priority ordering.
@@ -178,9 +189,19 @@ Same layout as 2"×1" but with:
 
 **Original Format Sorting**: Labels sorted by garment size only for efficient picking.
 
-**Barcode Generation**: Order numbers are converted to Code 128 barcodes with dynamic module width adjustment based on number length to ensure consistent display size regardless of order number length.
+**Order Number Encoding**:
+- **2×1 labels**: Order numbers encoded as DataMatrix codes using treepoem library, positioned at bottom-left corner
+- **3×1 labels**: Order numbers encoded as Code 128 barcodes with dynamic module width adjustment based on number length
+- Both formats support full order numbers without truncation
 
-**Image Processing**: DataMatrix images are downloaded, converted to grayscale, then to binary B&W for crisp thermal printing, and cached to avoid redundant downloads. Barcodes are similarly cached.
+**Image Processing**:
+- Product DataMatrix images are downloaded from URLs, converted to grayscale, then to binary B&W for crisp thermal printing, and cached to avoid redundant downloads
+- Order DataMatrix codes (2×1) are generated using treepoem and cached for performance
+- Code 128 barcodes (3×1) are generated using python-barcode library and cached similarly
+
+**Dependencies**:
+- **treepoem**: Generates DataMatrix codes for order numbers on 2×1 labels
+- **Ghostscript**: Required by treepoem for barcode generation (automatically installed in Docker, needs manual installation for local development on Windows)
 
 ### File Structure
 ```
